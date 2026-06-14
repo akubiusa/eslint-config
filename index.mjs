@@ -99,6 +99,22 @@ export default tseslint.config(
     },
   },
   {
+    // Vue コンポーネントは PascalCase の命名規則が慣習であるため、
+    // .vue ファイルに限り pascalCase を適用する。
+    // unicorn/filename-case のルールは ESLint flat config の「最後に定義したルールが勝つ」
+    // 仕様により、プロジェクト側でオーバーライドするとここで設定した checkDirectories: false
+    // も上書きされてしまう。
+    // そのため、プロジェクト側で filename-case を再定義せずにこのデフォルト設定を
+    // 使い続けられるよう、あらかじめ checkDirectories: false も含めて設定する。
+    files: ["**/*.vue"],
+    rules: {
+      "unicorn/filename-case": [
+        "error",
+        { case: "pascalCase", checkDirectories: false },
+      ],
+    },
+  },
+  {
     ignores: ["dist", "output", "node_modules", "data", "logs", "coverage"],
   },
   eslintPrettier
