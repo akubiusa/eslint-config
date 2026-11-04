@@ -179,8 +179,8 @@ importers:
         specifier: 79.0.0
         version: 79.0.0(eslint@10.14.0)(typescript@6.0.3)
       globals:
-        specifier: 17.13.0
-        version: 17.13.0
+        specifier: 17.14.0
+        version: 17.14.0
       neostandard:
         specifier: 0.14.1
         version: 0.14.1(eslint@10.14.0)(typescript@6.0.3)
@@ -596,8 +596,8 @@ packages:
     resolution: {integrity: sha512-7ACyT3wmyp3I61S4fG682L0VA2RGD9otkqGJIwNUMF1SWUombIIk+af1unuDYgMm082aHYwD+mzJvv9Iu8dsgg==}
     engines: {node: '>=18'}
 
-  globals@17.13.0:
-    resolution: {integrity: sha512-RwMTC61u7hrG3ZJMkZQOK4JLJrKS8QtoTii63EmWvFXHqycY9FObBJQCbsLxSO8kjKhWE5kV1GC+Vb1g3RI0Zg==}
+  globals@17.14.0:
+    resolution: {integrity: sha512-UtdkTVyAJePQv0J2M9Xe4L0ruNSDV314XiIJsADI2Zf40bcdAonE/D/OhAU8AT99oij9mhLByb+NvA3QWZYgCg==}
     engines: {node: '>=18'}
 
   globrex@0.1.2:
@@ -1253,7 +1253,7 @@ snapshots:
       entities: 8.1.0
       eslint: 10.14.0
       find-up-simple: 1.0.1
-      globals: 17.13.0
+      globals: 17.14.0
       identifier-regex: 1.1.0
       indent-string: 5.0.0
       is-builtin-module: 5.0.0
@@ -1387,7 +1387,7 @@ snapshots:
 
   globals@15.15.0: {}
 
-  globals@17.13.0: {}
+  globals@17.14.0: {}
 
   globrex@0.1.2: {}
 
@@ -1602,7 +1602,7 @@ snapshots:
       eslint-plugin-n: 18.5.0(eslint@10.14.0)(typescript@6.0.3)
       eslint-plugin-promise: 7.3.0(eslint@10.14.0)
       find-up: 8.0.0
-      globals: 17.13.0
+      globals: 17.14.0
       peowly: 2.0.1
       typescript-eslint: 8.72.1(eslint@10.14.0)(typescript@6.0.3)
     transitivePeerDependencies:
