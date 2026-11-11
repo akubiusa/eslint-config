@@ -6,95 +6,80 @@ import neostandard from "neostandard";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  // Standard JS のルールセット（スタイル系は prettier に委ねるため無効化）
+  // Standard JS rule set. Style rules are disabled because Prettier owns formatting.
   ...neostandard({ noStyle: true }),
   ...tseslint.configs.recommended,
   {
-    // eslint-plugin-unicorn のルールを flat/recommended に頼らず明示的に列挙する。
-    // 理由: flat/recommended は unicorn のバージョンアップごとに収録ルールが
-    // 無断で増減し、本パッケージに依存する多数のプロジェクトへ一斉に
-    // 新規エラーが波及するリスクがあるため。新しいルールを取り込む場合は
-    // このリストへ明示的に追記すること（unicorn の CHANGELOG を確認して判断する）。
+    // List eslint-plugin-unicorn rules explicitly instead of using flat/recommended.
+    // Reason: flat/recommended gains or loses rules on every unicorn release, which would
+    // push new errors to every project that depends on this package at once.
+    // To adopt a new rule, add it to this list after checking the unicorn changelog.
     //
-    // 生成方法: eslint-plugin-unicorn (現在インストールされている 71.1.0) の
-    // flat/recommended が定義するルール一覧を元に、以下を除外・調整して作成した。
-    // - deprecated ルールは対象外
-    // - catch-error-name, filename-case はオプション付きで設定するため、
-    //   下記の専用ブロックに記載し、ここでは省略する
-    // - 意図的に off とするルール（下記コメント参照）
+    // The list is a fixed snapshot of flat/recommended at eslint-plugin-unicorn 71.1.0
+    // and is not re-synced automatically, minus:
+    // - deprecated rules
+    // - catch-error-name and filename-case, which need options and have dedicated blocks below
+    // - rules deliberately turned off (see the "off" entries below)
     //
-    // 注意: このリストは eslint-plugin-unicorn の特定バージョン (71.1.0) 時点の
-    // flat/recommended を元に生成した固定スナップショットである。unicorn を
-    // アップデートする際は、追加・削除・改名されたルールが無いか CHANGELOG を
-    // 確認し、このリストへ反映すること。反映を怠ると、削除・改名されたルール ID
-    // を参照したままとなり、ESLint の設定検証エラーで全ユーザーがクラッシュする
-    // おそれがある。
+    // When upgrading unicorn, check the changelog for added, removed or renamed rules and
+    // update this list. A removed or renamed rule ID left here makes ESLint fail config
+    // validation and crashes the linter for every consumer.
     plugins: { unicorn },
     rules: {
-      // 集約処理のイディオムとして正当な用途が多く、for ループへの
-      // 書き換え強制がかえって可読性を落とすため無効化する
+      // reduce is a legitimate aggregation idiom; forcing a rewrite to for loops hurts readability.
       "unicorn/no-array-reduce": "off",
-      // クロージャで意図的に外側スコープの変数を捕捉する関数まで
-      // 最上位への移動を要求し、誤検知が多いため無効化する
+      // Too many false positives: it demands hoisting even functions that intentionally
+      // capture outer-scope variables in a closure.
       "unicorn/consistent-function-scoping": "off",
-      // トップレベル await を許可する（IIFE 併用の CLI ツール等のため）
+      // Allow top-level await (e.g. CLI tools that also use an IIFE).
       "unicorn/prefer-top-level-await": "off",
-      // 省略形を許可する (dev -> development, prod -> production などの変換をさせない)
+      // Allow abbreviations (do not force dev -> development, prod -> production, etc.).
       "unicorn/name-replacements": "off",
-      // null を許可する
+      // Allow null.
       "unicorn/no-null": "off",
-      // 無駄な undefined を許可する
+      // Allow explicit undefined (e.g. `return undefined`, `x = undefined`).
       "unicorn/no-useless-undefined": "off",
-      // クラスメンバーの順序（private before public）を強制しない。
-      // public-first の慣習は API の可読性として広く使われているため。
+      // Do not enforce class member order (private before public).
+      // Public-first is a widely used convention that keeps the API readable.
       "unicorn/consistent-class-member-order": "off",
-      // 依存プロジェクト横断での実運用調査 (tomacheese/book000/jaoafa 各オーガニゼーション規模) の
-      // 結果、誤検知率が高く実利が薄いと判断したルールを以下のとおり無効化する。
+      // The rules below are off because of a high false-positive rate and little benefit
+      // in real usage across dependent projects.
       //
-      // .then()/.catch()/.finally() チェーンを await へ書き換えるよう強制するが、
-      // 関数自体を async 化したくない薄いラッパー関数 (Promise を返すだけの関数) まで
-      // 書き換え対象になり実利が薄いため無効化する
+      // Forces .then()/.catch()/.finally() chains to become await, but also flags thin wrappers
+      // that just return a Promise and should not become async.
       "unicorn/prefer-await": "off",
-      // is/has/should 等のプレフィックスを強制するが、ドメイン語彙由来の真偽値変数名
-      // (enabled, visible 等) まで誤検知するため無効化する
+      // Enforces is/has/should prefixes, but also flags domain-vocabulary booleans
+      // such as enabled or visible.
       "unicorn/consistent-boolean-name": "off",
-      // get/set/create 等の動詞プレフィックスを持つ関数以外の値 (変数・プロパティ等) を
-      // 検出するが、removeButton (削除用ボタン要素を指す変数名) のようなドメイン語彙由来の
-      // 命名まで誤検知するため無効化する
+      // Flags non-function values (variables, properties) with a verb prefix such as get/set/create,
+      // but also domain names like removeButton (a variable holding a "remove" button element).
       "unicorn/no-non-function-verb-prefix": "off",
-      // Number() による型強制を強制するが、parseInt 等との挙動差 (NaN の扱い等) により
-      // 意図せず動作が変わる危険があるため無効化する
+      // Forces Number() coercion, but it behaves differently from parseInt (e.g. NaN handling),
+      // so the automatic rewrite can change behavior unintentionally.
       "unicorn/prefer-number-coercion": "off",
-      // モジュールトップレベル変数へのキャッシュ/メモ化目的の代入という一般的な
-      // パターンまで誤検知するため無効化する
+      // Also flags the common pattern of assigning a module-level variable for caching or memoization.
       "unicorn/no-top-level-assignment-in-function": "off",
-      // \uXXXX と \u{XXXX} は等価であり、既存コードへの機械的な書き換えを強制する
-      // だけで実利が薄いため無効化する
+      // \uXXXX and \u{XXXX} are equivalent; the rule only forces a mechanical rewrite of existing code.
       "unicorn/prefer-unicode-code-point-escapes": "off",
-      // ネストしたループ内の break による意図的な早期脱出パターンまで誤検知するため
-      // 無効化する
+      // Also flags intentional early exits via break inside nested loops.
       "unicorn/no-break-in-nested-loop": "off",
-      // 継承・拡張を意図した static メソッド内でのクラス名参照という正当な
-      // パターンまで誤検知するため無効化する
+      // Also flags legitimate class-name references inside static methods that are meant to be extended.
       "unicorn/class-reference-in-static-methods": "off",
-      // while (true) の先頭で break 条件を判定するコードを、条件を while() の式へ
-      // 移すよう強制するが、ループ内で算出した値を break 条件に使うイディオム
-      // (while (true) { const chunk = readNext(); if (!chunk) break; ... }) まで
-      // 誤検知するため無効化する
+      // Forces a leading `if (...) break` of while (true) into the while() condition, but also flags
+      // the idiom where the break condition uses a value computed inside the loop
+      // (while (true) { const chunk = readNext(); if (!chunk) break; ... }).
       "unicorn/prefer-while-loop-condition": "off",
-      // location.href への代入と location.assign() はほぼ等価であり、機械的な
-      // 書き換えを強制するだけで実利が薄いため無効化する
+      // Assigning location.href and calling location.assign() are nearly equivalent;
+      // the rule only forces a mechanical rewrite.
       "unicorn/prefer-location-assign": "off",
-      // 呼び出しの引数として渡された呼び出しの入れ子の深さを検出するが、
-      // z.array(z.object({ ... })) のような Zod 等のスキーマ定義における正当な
-      // 入れ子呼び出しまで誤検知するため無効化する
+      // Limits the nesting depth of calls passed as arguments, but also flags legitimate nesting in
+      // schema definitions such as Zod's z.array(z.object({ ... })).
       "unicorn/max-nested-calls": "off",
-      // globalThis/window/global のプロパティへの代入は、テストやモックの
-      // セットアップにおける標準的なイディオム (globalThis.fetch = mock 等) であり、
-      // 実運用コードでの誤検知率が高いため無効化する
+      // Assigning to properties of globalThis/window/global is the standard way to set up tests and
+      // mocks (globalThis.fetch = mock), so the false-positive rate is high in real code.
       "unicorn/no-global-object-property-assignment": "off",
       //
-      // 以下、上記以外の flat/recommended 収録ルールをすべて明示的に error とする
+      // All remaining rules of the flat/recommended snapshot are set to "error" explicitly below.
       "unicorn/better-dom-traversing": "error",
       "unicorn/consistent-assert": "error",
       "unicorn/consistent-compound-words": "error",
@@ -394,13 +379,13 @@ export default tseslint.config(
       ...tseslint.configs.stylisticTypeChecked,
     ],
     rules: {
-      // TypeScriptのany型の使用を許可する
+      // Allow the any type.
       "@typescript-eslint/no-explicit-any": "off",
-      // TypeScriptの危険な代入を許可する
+      // Allow unsafe assignments of any.
       "@typescript-eslint/no-unsafe-assignment": "off",
-      // TypeScriptの危険な引数を許可する
+      // Allow unsafe any arguments.
       "@typescript-eslint/no-unsafe-argument": "off",
-      // テンプレート式において、数値や真偽値、nullishを許可する
+      // Allow numbers, booleans, any and nullish values in template literals.
       "@typescript-eslint/restrict-template-expressions": [
         "error",
         {
@@ -410,7 +395,7 @@ export default tseslint.config(
           allowNullish: true,
         },
       ],
-      // 呼び出されないPromiseを許容しないが、void演算子や即時関数では許可する
+      // Disallow floating Promises, except with the void operator or an immediately invoked async function.
       "@typescript-eslint/no-floating-promises": [
         "error",
         {
@@ -418,35 +403,35 @@ export default tseslint.config(
           ignoreIIFE: true,
         },
       ],
-      // 不要な条件式を許容しないが、定数ループ条件（無限ループ）は許可する
+      // Disallow unnecessary conditions, except constant loop conditions (infinite loops).
       "@typescript-eslint/no-unnecessary-condition": [
         "error",
         {
           allowConstantLoopConditions: true,
         },
       ],
-      // 名前空間として使用されるクラスを許可する
+      // Allow classes used as namespaces.
       "@typescript-eslint/no-extraneous-class": "off",
-      // 変数などの未定義使用について、TypeScript準拠とする
+      // Use the TypeScript-aware version of no-use-before-define.
       "no-use-before-define": "off",
       "@typescript-eslint/no-use-before-define": "error",
     },
   },
   {
-    // catch ブロックのエラー変数名は error に統一する。
-    // err も常に許容する（error_ は要求しない）。
+    // Name the catch-clause variable `error`.
+    // `err` is always accepted too (error_ is not required).
     rules: {
       "unicorn/catch-error-name": ["error", { name: "error", ignore: [/^err$/] }],
     },
   },
   {
-    // unicorn v65 からファイル名に加えてディレクトリ名もチェック対象となったが、
-    // ignore オプションはマッチしたセグメントを含むファイル全体をスキップするため
-    // ファイル名チェック自体まで無効化してしまう。
-    // そのため checkDirectories: false でディレクトリ名チェックのみ無効化する。
-    // src 等の慣習的なディレクトリ名でエラーが起きる問題もこれで解消される。
-    // __tests__ や __mocks__ 等のダブルアンダースコアディレクトリは引き続き
-    // ignore で対象外とする（テストファイル等はファイル名チェックも不要なため）。
+    // Since unicorn v65 directory names are checked as well as file names.
+    // The `ignore` option skips the whole file when any path segment matches.
+    // That would also disable the file name check, so only the directory check is disabled
+    // with checkDirectories: false.
+    // This also avoids errors for conventional directory names such as src.
+    // Double-underscore directories such as __tests__ and __mocks__ stay in `ignore`
+    // (test files need no file name check).
     rules: {
       "unicorn/filename-case": [
         "error",
@@ -455,13 +440,10 @@ export default tseslint.config(
     },
   },
   {
-    // Vue コンポーネントは PascalCase の命名規則が慣習であるため、
-    // .vue ファイルに限り pascalCase を適用する。
-    // unicorn/filename-case のルールは ESLint flat config の「最後に定義したルールが勝つ」
-    // 仕様により、プロジェクト側でオーバーライドするとここで設定した checkDirectories: false
-    // も上書きされてしまう。
-    // そのため、プロジェクト側で filename-case を再定義せずにこのデフォルト設定を
-    // 使い続けられるよう、あらかじめ checkDirectories: false も含めて設定する。
+    // Vue components conventionally use PascalCase, so pascalCase applies to .vue files only.
+    // In flat config the last definition of a rule wins.
+    // A consumer that overrides unicorn/filename-case would also drop checkDirectories: false.
+    // It is repeated here so consumers can keep these defaults without redefining the rule.
     files: ["**/*.vue"],
     rules: {
       "unicorn/filename-case": [
