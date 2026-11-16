@@ -10,20 +10,17 @@ export default tseslint.config(
   ...neostandard({ noStyle: true }),
   ...tseslint.configs.recommended,
   {
-    // List eslint-plugin-unicorn rules explicitly instead of using flat/recommended.
-    // Reason: flat/recommended gains or loses rules on every unicorn release, which would
-    // push new errors to every project that depends on this package at once.
-    // To adopt a new rule, add it to this list after checking the unicorn changelog.
+    // List eslint-plugin-unicorn rules explicitly instead of using flat/recommended, so that a
+    // unicorn upgrade never changes the rule set silently for every dependent project.
     //
-    // The list is a fixed snapshot of flat/recommended at eslint-plugin-unicorn 71.1.0
-    // and is not re-synced automatically, minus:
-    // - deprecated rules
+    // The list tracks the installed flat/recommended, minus:
     // - catch-error-name and filename-case, which need options and have dedicated blocks below
     // - rules deliberately turned off (see the "off" entries below)
     //
-    // When upgrading unicorn, check the changelog for added, removed or renamed rules and
-    // update this list. A removed or renamed rule ID left here makes ESLint fail config
-    // validation and crashes the linter for every consumer.
+    // test.mjs fails when this list drifts from the installed preset. To resolve a failure,
+    // add the new rule here, or turn it off with a reason and add it to the deviation list in
+    // test.mjs. A removed or renamed rule ID left here makes ESLint fail config validation
+    // and crashes the linter for every consumer.
     plugins: { unicorn },
     rules: {
       // reduce is a legitimate aggregation idiom; forcing a rewrite to for loops hurts readability.
@@ -78,8 +75,13 @@ export default tseslint.config(
       // Assigning to properties of globalThis/window/global is the standard way to set up tests and
       // mocks (globalThis.fetch = mock), so the false-positive rate is high in real code.
       "unicorn/no-global-object-property-assignment": "off",
+      // Strips the leading asterisk from JSDoc lines, which contradicts the JSDoc convention
+      // and only churns whitespace.
+      "unicorn/no-asterisk-prefix-in-documentation-comments": "off",
+      // Expands one-line JSDoc blocks into multiple lines, which only churns whitespace.
+      "unicorn/single-line-block-comment-style": "off",
       //
-      // All remaining rules of the flat/recommended snapshot are set to "error" explicitly below.
+      // All remaining rules of flat/recommended are set to "error" explicitly below.
       "unicorn/better-dom-traversing": "error",
       "unicorn/consistent-assert": "error",
       "unicorn/consistent-compound-words": "error",
@@ -117,6 +119,7 @@ export default tseslint.config(
       "unicorn/no-array-sort": "error",
       "unicorn/no-array-sort-for-min-max": "error",
       "unicorn/no-array-splice": "error",
+      "unicorn/no-async-iterator-callback": "error",
       "unicorn/no-async-promise-finally": "error",
       "unicorn/no-await-expression-member": "error",
       "unicorn/no-await-in-promise-methods": "error",
@@ -126,6 +129,7 @@ export default tseslint.config(
       "unicorn/no-chained-comparison": "error",
       "unicorn/no-collection-bracket-access": "error",
       "unicorn/no-computed-property-existence-check": "error",
+      "unicorn/no-conflicting-constraints": "error",
       "unicorn/no-confusing-array-splice": "error",
       "unicorn/no-confusing-array-with": "error",
       "unicorn/no-console-spaces": "error",
@@ -144,21 +148,34 @@ export default tseslint.config(
       "unicorn/no-for-loop": "error",
       "unicorn/no-immediate-mutation": "error",
       "unicorn/no-impossible-length-comparison": "error",
+      "unicorn/no-incomplete-accessor-override": "error",
       "unicorn/no-incorrect-query-selector": "error",
       "unicorn/no-incorrect-template-string-interpolation": "error",
+      "unicorn/no-ineffective-csp-directives": "error",
       "unicorn/no-instanceof-builtins": "error",
       "unicorn/no-invalid-argument-count": "error",
+      "unicorn/no-invalid-boolean-attribute-value": "error",
       "unicorn/no-invalid-character-comparison": "error",
+      "unicorn/no-invalid-dom-token": "error",
       "unicorn/no-invalid-fetch-options": "error",
+      "unicorn/no-invalid-integrity": "error",
+      "unicorn/no-invalid-intl-options": "error",
+      "unicorn/no-invalid-property-descriptor": "error",
       "unicorn/no-invalid-remove-event-listener": "error",
+      "unicorn/no-invalid-response-options": "error",
+      "unicorn/no-invalid-style-set-property": "error",
+      "unicorn/no-invalid-temporal-arithmetic": "error",
+      "unicorn/no-invalid-url-protocol-comparison": "error",
       "unicorn/no-invalid-well-known-symbol-methods": "error",
       "unicorn/no-late-current-target-access": "error",
       "unicorn/no-late-event-control": "error",
+      "unicorn/no-leading-empty-lines": "error",
       "unicorn/no-lonely-if": "error",
       "unicorn/no-loop-iterable-mutation": "error",
       "unicorn/no-magic-array-flat-depth": "error",
       "unicorn/no-mismatched-map-key": "error",
       "unicorn/no-misrefactored-assignment": "error",
+      "unicorn/no-multiple-promise-resolver-calls": "error",
       "unicorn/no-named-default": "error",
       "unicorn/no-negated-array-predicate": "error",
       "unicorn/no-negated-comparison": "error",
@@ -171,10 +188,12 @@ export default tseslint.config(
       "unicorn/no-object-as-default-parameter": "error",
       "unicorn/no-object-methods-with-collections": "error",
       "unicorn/no-optional-chaining-on-undeclared-variable": "error",
+      "unicorn/no-prevent-default-in-passive-listener": "error",
       "unicorn/no-process-exit": "error",
       "unicorn/no-redundant-comparison": "error",
       "unicorn/no-return-array-push": "error",
       "unicorn/no-selector-as-dom-name": "error",
+      "unicorn/no-shorthand-property-overrides": "error",
       "unicorn/no-single-promise-in-promise-methods": "error",
       "unicorn/no-static-only-class": "error",
       "unicorn/no-subtraction-comparison": "error",
@@ -182,6 +201,7 @@ export default tseslint.config(
       "unicorn/no-this-assignment": "error",
       "unicorn/no-this-outside-of-class": "error",
       "unicorn/no-top-level-side-effects": "error",
+      "unicorn/no-transition-all": "error",
       "unicorn/no-typeof-undefined": "error",
       "unicorn/no-uncalled-method": "error",
       "unicorn/no-undeclared-class-members": "error",
@@ -193,18 +213,24 @@ export default tseslint.config(
       "unicorn/no-unnecessary-fetch-options": "error",
       "unicorn/no-unnecessary-global-this": "error",
       "unicorn/no-unnecessary-nested-ternary": "error",
+      "unicorn/no-unnecessary-parameters": "error",
       "unicorn/no-unnecessary-polyfills": "error",
       "unicorn/no-unnecessary-slice-end": "error",
       "unicorn/no-unnecessary-splice": "error",
+      "unicorn/no-unnecessary-string-trim": "error",
       "unicorn/no-unreadable-array-destructuring": "error",
       "unicorn/no-unreadable-for-of-expression": "error",
       "unicorn/no-unreadable-iife": "error",
       "unicorn/no-unreadable-object-destructuring": "error",
       "unicorn/no-unsafe-buffer-conversion": "error",
+      "unicorn/no-unsafe-json-serialization": "error",
       "unicorn/no-unsafe-promise-all-settled-values": "error",
       "unicorn/no-unsafe-property-key": "error",
+      "unicorn/no-unsafe-sqlite-interpolation": "error",
       "unicorn/no-unsafe-string-replacement": "error",
-      "unicorn/no-unused-array-method-return": "error",
+      "unicorn/no-unused-builtin-method-return": "error",
+      "unicorn/no-unused-iterator-helper": "error",
+      "unicorn/no-url-in-search-params": "error",
       "unicorn/no-useless-boolean-cast": "error",
       "unicorn/no-useless-coercion": "error",
       "unicorn/no-useless-collection-argument": "error",
@@ -220,10 +246,13 @@ export default tseslint.config(
       "unicorn/no-useless-logical-operand": "error",
       "unicorn/no-useless-override": "error",
       "unicorn/no-useless-promise-resolve-reject": "error",
+      "unicorn/no-useless-re-export": "error",
       "unicorn/no-useless-recursion": "error",
+      "unicorn/no-useless-set-construction": "error",
       "unicorn/no-useless-spread": "error",
       "unicorn/no-useless-switch-case": "error",
       "unicorn/no-useless-template-literals": "error",
+      "unicorn/no-using-resource-escape": "error",
       "unicorn/no-xor-as-exponentiation": "error",
       "unicorn/no-zero-fractions": "error",
       "unicorn/number-literal-case": "error",
@@ -253,16 +282,19 @@ export default tseslint.config(
       "unicorn/prefer-class-fields": "error",
       "unicorn/prefer-classlist-toggle": "error",
       "unicorn/prefer-code-point": "error",
+      "unicorn/prefer-combined-guards": "error",
       "unicorn/prefer-continue": "error",
       "unicorn/prefer-date-now": "error",
       "unicorn/prefer-default-parameters": "error",
       "unicorn/prefer-direct-iteration": "error",
       "unicorn/prefer-dom-node-append": "error",
+      "unicorn/prefer-dom-node-html-methods": "error",
       "unicorn/prefer-dom-node-remove": "error",
       "unicorn/prefer-dom-node-replace-children": "error",
       "unicorn/prefer-dom-node-text-content": "error",
       "unicorn/prefer-early-return": "error",
       "unicorn/prefer-else-if": "error",
+      "unicorn/prefer-escaped-irregular-whitespace": "error",
       "unicorn/prefer-event-target": "error",
       "unicorn/prefer-export-from": "error",
       "unicorn/prefer-flat-math-min-max": "error",
@@ -280,7 +312,9 @@ export default tseslint.config(
       "unicorn/prefer-iterator-helpers": "error",
       "unicorn/prefer-iterator-to-array": "error",
       "unicorn/prefer-iterator-to-array-at-end": "error",
+      "unicorn/prefer-iterator-zip": "error",
       "unicorn/prefer-keyboard-event-key": "error",
+      "unicorn/prefer-literal-ascii": "error",
       "unicorn/prefer-logical-operator-over-ternary": "error",
       "unicorn/prefer-map-from-entries": "error",
       "unicorn/prefer-math-abs": "error",
@@ -304,6 +338,7 @@ export default tseslint.config(
       "unicorn/prefer-optional-catch-binding": "error",
       "unicorn/prefer-path2d": "error",
       "unicorn/prefer-private-class-fields": "error",
+      "unicorn/prefer-promise-static-methods": "error",
       "unicorn/prefer-promise-try": "error",
       "unicorn/prefer-promise-with-resolvers": "error",
       "unicorn/prefer-prototype-methods": "error",
@@ -316,6 +351,7 @@ export default tseslint.config(
       "unicorn/prefer-set-has": "error",
       "unicorn/prefer-set-methods": "error",
       "unicorn/prefer-set-size": "error",
+      "unicorn/prefer-short-escape-sequences": "error",
       "unicorn/prefer-simple-condition-first": "error",
       "unicorn/prefer-simple-sort-comparator": "error",
       "unicorn/prefer-simplified-conditions": "error",
@@ -336,7 +372,9 @@ export default tseslint.config(
       "unicorn/prefer-string-trim-start-end": "error",
       "unicorn/prefer-structured-clone": "error",
       "unicorn/prefer-switch": "error",
+      "unicorn/prefer-temporal-conversion": "error",
       "unicorn/prefer-ternary": "error",
+      "unicorn/prefer-then-catch": "error",
       "unicorn/prefer-toggle-attribute": "error",
       "unicorn/prefer-type-error": "error",
       "unicorn/prefer-type-literal-last": "error",
@@ -353,6 +391,7 @@ export default tseslint.config(
       "unicorn/require-number-to-fixed-digits-argument": "error",
       "unicorn/require-passive-events": "error",
       "unicorn/require-proxy-trap-boolean-return": "error",
+      "unicorn/require-text-decoder-streaming": "error",
       "unicorn/switch-case-braces": "error",
       "unicorn/switch-case-break-position": "error",
       "unicorn/template-indent": "error",
