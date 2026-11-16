@@ -469,11 +469,9 @@ async function main() {
   fs.unlinkSync(tsconfigPath);
   console.log("\n--- Summary ---");
   console.log(`Passed: ${pass} / Failed: ${fail} / Total: ${testCases.length}`);
-}
-
-if (process.env.CI || process.env.TEST_CLI) {
-  await main();
-  process.exit(0);
+  if (fail > 0) {
+    process.exitCode = 1;
+  }
 }
 
 main().catch((e) => {
