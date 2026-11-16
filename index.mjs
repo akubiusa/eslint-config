@@ -21,9 +21,10 @@ export default tseslint.config(
     // - catch-error-name and filename-case, which need options and have dedicated blocks below
     // - rules deliberately turned off (see the "off" entries below)
     //
-    // When upgrading unicorn, check the changelog for added, removed or renamed rules and
-    // update this list. A removed or renamed rule ID left here makes ESLint fail config
-    // validation and crashes the linter for every consumer.
+    // The 79.0.0 preset differs: new recommended rules are not enabled automatically,
+    // and no-unused-array-method-return remains enabled to preserve existing behavior.
+    // When upgrading unicorn, review its changelog and fix removed or renamed rule IDs;
+    // enabling new rules requires an explicit decision because it can break consumers.
     plugins: { unicorn },
     rules: {
       // reduce is a legitimate aggregation idiom; forcing a rewrite to for loops hurts readability.
