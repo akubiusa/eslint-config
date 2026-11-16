@@ -26,9 +26,9 @@ pnpm install
 pnpm test
 ```
 
-`pnpm test` runs `TEST_CLI=1 node --experimental-vm-modules test.mjs`.
+`pnpm test` runs `node --experimental-vm-modules test.mjs`.
 It creates `src/`, `tsconfig.json` and `eslint.config.mjs` in the repository root, lints one temp file per test case in a single ESLint process, and removes the temp files, `tsconfig.json` and `eslint.config.mjs` afterwards (an empty `src/` is left behind).
-The script exits with code 0 even when cases fail, so read the `Failed:` count in the summary (and any `❌` lines) instead of relying on the exit code.
+The script exits with a non-zero code when any case fails, and the summary prints the `Failed:` count (failed cases are marked with `❌`).
 There is no separate lint or build step.
 
 ## Structure of `index.mjs`

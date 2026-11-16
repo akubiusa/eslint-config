@@ -29,6 +29,6 @@
   },
   "packageManager": "pnpm@12.20.0",
   "scripts": {
-    "test": "TEST_CLI=1 node --experimental-vm-modules test.mjs"
+    "test": "node --experimental-vm-modules test.mjs"
   }
 }
