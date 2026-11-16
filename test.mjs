@@ -1,10 +1,101 @@
 // Verifies the behavior of the ESLint flat config (index.mjs) by linting temporary files.
 import { execFile } from "child_process";
+import { ESLint } from "eslint";
+import unicorn from "eslint-plugin-unicorn";
 import fs from "fs";
 import path from "path";
 import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
+
+// Deviations from unicorn flat/recommended. Each needs a comment in index.mjs.
+const DELIBERATELY_OFF = [
+  "no-array-reduce",
+  "consistent-function-scoping",
+  "prefer-top-level-await",
+  "name-replacements",
+  "no-null",
+  "no-useless-undefined",
+  "consistent-class-member-order",
+  "prefer-await",
+  "consistent-boolean-name",
+  "no-non-function-verb-prefix",
+  "prefer-number-coercion",
+  "no-top-level-assignment-in-function",
+  "prefer-unicode-code-point-escapes",
+  "no-break-in-nested-loop",
+  "class-reference-in-static-methods",
+  "prefer-while-loop-condition",
+  "prefer-location-assign",
+  "max-nested-calls",
+  "no-global-object-property-assignment",
+  "no-asterisk-prefix-in-documentation-comments",
+  "single-line-block-comment-style",
+].map((rule) => `unicorn/${rule}`);
+// Enabled, but with options that differ from the preset.
+const CUSTOM_OPTIONS = ["unicorn/catch-error-name", "unicorn/filename-case"];
+// Turned off by eslint-config-prettier, which comes last in index.mjs.
+const PRETTIER_OFF = [
+  "empty-brace-spaces",
+  "no-nested-ternary",
+  "number-literal-case",
+  "template-indent",
+].map((rule) => `unicorn/${rule}`);
+
+const SEVERITIES = { off: 0, warn: 1, error: 2 };
+const severityOf = (entry) => {
+  const level = Array.isArray(entry) ? entry[0] : entry;
+  return typeof level === "string" ? SEVERITIES[level] : (level ?? 0);
+};
+
+/**
+ * Compares the effective unicorn rules of index.mjs with the installed flat/recommended preset.
+ * @returns Offending rule IDs per category; every list is empty when there is no drift.
+ */
+async function checkUnicornDrift() {
+  const config = (await import("./index.mjs")).default;
+  const eslint = new ESLint({
+    overrideConfigFile: true,
+    overrideConfig: config,
+    cwd: process.cwd(),
+  });
+  // A .ts path so that the TypeScript-only blocks apply too; nothing is written to disk.
+  const { rules: effective } = await eslint.calculateConfigForFile(
+    path.join(process.cwd(), "src", "drift-probe.ts")
+  );
+  const isUnicorn = (id) => id.startsWith("unicorn/");
+  const preset = Object.fromEntries(
+    Object.entries(unicorn.configs.recommended.rules)
+      .filter(([id]) => isUnicorn(id))
+      .map(([id, entry]) => [id, severityOf(entry)])
+  );
+  const effectiveSeverity = (id) => severityOf(effective[id]);
+  const allowed = new Set([
+    ...DELIBERATELY_OFF,
+    ...CUSTOM_OPTIONS,
+    ...PRETTIER_OFF,
+  ]);
+  const configured = Object.keys(effective).filter(isUnicorn);
+
+  return {
+    missing: Object.keys(preset).filter(
+      (id) =>
+        preset[id] !== 0 &&
+        effectiveSeverity(id) !== preset[id] &&
+        !allowed.has(id)
+    ),
+    extra: configured.filter(
+      (id) => effectiveSeverity(id) !== 0 && (preset[id] ?? 0) === 0
+    ),
+    deprecated: configured.filter((id) => {
+      const rule = unicorn.rules[id.slice("unicorn/".length)];
+      return !rule || rule.meta.deprecated;
+    }),
+    staleAllowlist: [...DELIBERATELY_OFF, ...PRETTIER_OFF].filter(
+      (id) => effectiveSeverity(id) !== 0
+    ),
+  };
+}
 
 async function main() {
   const testCases = [
@@ -300,6 +391,24 @@ async function main() {
       rules: ["unicorn/filename-case"],
       dir: "notKebabCaseDir",
     },
+    {
+      name: "single-line-block-comment-style: a one-line JSDoc block is allowed",
+      code: "/** Adds one. */\nexport function addOne(x: number): number { return x + 1; }",
+      shouldError: false,
+      rules: ["unicorn/single-line-block-comment-style"],
+    },
+    {
+      name: "no-asterisk-prefix-in-documentation-comments: a JSDoc block with asterisk-prefixed lines is allowed",
+      code: "/**\n * Adds one.\n * Second line.\n */\nexport function addOne(x: number): number { return x + 1; }",
+      shouldError: false,
+      rules: ["unicorn/no-asterisk-prefix-in-documentation-comments"],
+    },
+    {
+      name: "no-unnecessary-string-trim: trim() before startsWith() is an error (a rule added by the unicorn resync)",
+      code: "export const a = ' x '.trim().startsWith('x');",
+      shouldError: true,
+      rules: ["unicorn/no-unnecessary-string-trim"],
+    },
   ];
 
   // Create temp files under src/ so they reliably match files: ["**/*.ts"] in the flat config.
@@ -467,8 +576,27 @@ async function main() {
     fs.rmSync(path.join(srcDir, dir), { recursive: true });
   }
   fs.unlinkSync(tsconfigPath);
+
+  const drift = await checkUnicornDrift();
+  const driftName =
+    "unicorn drift: index.mjs matches the installed eslint-plugin-unicorn flat/recommended except for documented deviations";
+  if (Object.values(drift).every((ids) => ids.length === 0)) {
+    console.log(`✅ ${driftName}`);
+    pass++;
+  } else {
+    console.error(`❌ ${driftName}`);
+    for (const [category, ids] of Object.entries(drift)) {
+      if (ids.length > 0) {
+        console.error(`  ${category} (${ids.length}): ${ids.join(", ")}`);
+      }
+    }
+    fail++;
+  }
+
   console.log("\n--- Summary ---");
-  console.log(`Passed: ${pass} / Failed: ${fail} / Total: ${testCases.length}`);
+  console.log(
+    `Passed: ${pass} / Failed: ${fail} / Total: ${testCases.length + 1}`
+  );
   if (fail > 0) {
     process.exitCode = 1;
   }
