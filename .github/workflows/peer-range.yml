@@ -1,0 +1,70 @@
+# Verify the supported ESLint peer range: the minimum and the latest 10.x.
+
+name: Peer range
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  peer-range:
+    name: ESLint ${{ matrix.eslint }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Keep the minimum in sync with peerDependencies.eslint in package.json
+        eslint:
+          - 10.4.0
+          - ^10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          run_install: false
+
+      - name: Setup node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Override the ESLint dev pin (CI workspace only)
+        env:
+          ESLINT_SPEC: ${{ matrix.eslint }}
+        run: pnpm add --save-dev --workspace-root "eslint@$ESLINT_SPEC"
+
+      - name: Test
+        run: pnpm test
+
+      - name: Consumer install check
+        env:
+          ESLINT_SPEC: ${{ matrix.eslint }}
+        run: |
+          tarball="$(npm pack --pack-destination "$RUNNER_TEMP" --silent)"
+          mkdir "$RUNNER_TEMP/consumer"
+          cd "$RUNNER_TEMP/consumer"
+          npm install --dry-run --ignore-scripts --no-audit --no-fund "eslint@$ESLINT_SPEC" "$RUNNER_TEMP/$tarball"

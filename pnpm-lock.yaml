@@ -178,9 +178,6 @@ importers:
       '@typescript-eslint/parser':
         specifier: 8.73.0
         version: 8.73.0(eslint@10.15.0)(typescript@6.0.3)
-      eslint:
-        specifier: 10.15.0
-        version: 10.15.0
       eslint-config-prettier:
         specifier: 10.1.8
         version: 10.1.8(eslint@10.15.0)
@@ -196,6 +193,10 @@ importers:
       typescript-eslint:
         specifier: 8.73.0
         version: 8.73.0(eslint@10.15.0)(typescript@6.0.3)
+    devDependencies:
+      eslint:
+        specifier: 10.15.0
+        version: 10.15.0
 
 packages:
 

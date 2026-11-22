@@ -18,6 +18,7 @@
 - Do not push commits to Renovate PRs.
 - Do not work around TypeScript errors with `skipLibCheck`.
 - Never commit secrets.
+- The `eslint` peer dependency is a range, `^10.4.0`, whose minimum is bounded by the tightest peer requirement of the direct dependencies (currently `eslint-plugin-unicorn`); `devDependencies.eslint` is an exact pin that Renovate updates and must stay inside that range; raising the minimum is a breaking change, and the `Peer range` workflow verifies the minimum and the latest 10.x.
 
 ## Commands
 

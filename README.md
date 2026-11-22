@@ -4,6 +4,8 @@ ESLint config for [Tomachi (book000)](https://github.com/book000)
 
 ## 🚀 Install
 
+Supported ESLint versions: `^10.4.0` (10.4.0 or later, below 11).
+
 If you are using npm:
 
 ```shell
