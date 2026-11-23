@@ -32,6 +32,6 @@
   },
   "packageManager": "pnpm@12.22.0",
   "scripts": {
-    "test": "node --experimental-vm-modules test.mjs"
+    "test": "node --experimental-vm-modules test.mjs && node test-harness.mjs"
   }
 }

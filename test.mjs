@@ -496,10 +496,8 @@ async function main() {
     );
     jsonOutput = stdout;
   } catch (error) {
-    // ESLint exits non-zero when a test case has the expected errors, which is normal here,
-    // so treat it as success as long as JSON was written to stdout.
-    // If stdout has no JSON (e.g. a config error), the later JSON.parse throws.
-    if (error.stdout) {
+    // Exit 1 represents lint diagnostics; exit 2 represents a failed ESLint run.
+    if (error.code === 1 && error.stdout) {
       jsonOutput = error.stdout;
     } else {
       throw error;
@@ -526,10 +524,13 @@ async function main() {
     let errorCount = 0;
     const relevantErrors = [];
     const ignoredErrors = [];
+    const fatalErrors = [];
     for (const message of fileResult.messages) {
       const severityLabel = message.severity === 2 ? "error" : "warning";
       const line = `  ${message.line}:${message.column}  ${severityLabel}  ${message.message}  ${message.ruleId ?? ""}`;
-      if (message.ruleId && rules.includes(message.ruleId)) {
+      if (message.fatal || (!message.ruleId && message.severity === 2)) {
+        fatalErrors.push(line);
+      } else if (message.ruleId && rules.includes(message.ruleId)) {
         errorCount = 1;
         relevantErrors.push(line);
       } else {
@@ -538,7 +539,7 @@ async function main() {
     }
 
     fs.unlinkSync(tmpFilePath);
-    return { name, shouldError, errorCount, relevantErrors, ignoredErrors };
+    return { name, shouldError, errorCount, relevantErrors, ignoredErrors, fatalErrors };
   });
   let pass = 0,
     fail = 0;
@@ -548,17 +549,22 @@ async function main() {
     errorCount,
     relevantErrors,
     ignoredErrors,
+    fatalErrors,
   } of results) {
-    if (shouldError ? errorCount > 0 : errorCount === 0) {
+    if (fatalErrors.length === 0 && (shouldError ? errorCount > 0 : errorCount === 0)) {
       console.log(`✅ ${name}`);
       pass++;
     } else {
       console.error(
         `❌ ${name} (expected: ${shouldError ? "error" : "OK"}, actual: ${
-          errorCount > 0 ? "error" : "OK"
+          fatalErrors.length > 0 ? "fatal error" : errorCount > 0 ? "error" : "OK"
         })`
       );
       fail++;
+    }
+    if (fatalErrors.length > 0) {
+      console.error("  Fatal or configuration errors:");
+      fatalErrors.forEach((e) => console.error(`    ${e}`));
     }
     if (relevantErrors && relevantErrors.length > 0) {
       console.error(`  Errors from the target rules:`);
