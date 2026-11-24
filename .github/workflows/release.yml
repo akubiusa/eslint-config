@@ -10,8 +10,15 @@ concurrency:
   group: ${{ github.workflow }}
 
 jobs:
+  node-ci:
+    name: Node CI
+    permissions:
+      contents: read
+    uses: book000/templates/.github/workflows/reusable-nodejs-ci-pnpm.yml@master
+
   release:
     name: Release
+    needs: node-ci
     runs-on: ubuntu-latest
 
     permissions:
