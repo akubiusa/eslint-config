@@ -5,6 +5,7 @@ import unicorn from "eslint-plugin-unicorn";
 import fs from "fs";
 import path from "path";
 import { promisify } from "util";
+import { evaluateMessages } from "./evaluate-messages.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -97,7 +98,7 @@ async function checkUnicornDrift() {
   };
 }
 
-async function main() {
+async function main(cleanups) {
   const testCases = [
     {
       name: "prefer-top-level-await: top-level await is allowed",
@@ -416,6 +417,8 @@ async function main() {
   const tmpDir = path.join(srcDir, "__tmp__cli");
   if (!fs.existsSync(srcDir)) fs.mkdirSync(srcDir);
   if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
+  // Registered up front so a thrown error (failed ESLint run, missing result) still cleans up.
+  cleanups.push(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
 
   // Create each directory named by a test case's dir (under src) so the
   // unicorn/filename-case directory name check can be verified.
@@ -426,16 +429,16 @@ async function main() {
   );
   // Only directories created by this test are removed during cleanup,
   // so an existing src/__tests__ etc. is never deleted by mistake.
-  const createdExtraDirs = new Set();
   for (const dir of extraDirs) {
     const dirPath = path.join(srcDir, dir);
     if (!fs.existsSync(dirPath)) {
       fs.mkdirSync(dirPath, { recursive: true });
-      createdExtraDirs.add(dir);
+      cleanups.push(() => fs.rmSync(dirPath, { recursive: true, force: true }));
     }
   }
 
   const tsconfigPath = path.join(process.cwd(), "tsconfig.json");
+  cleanups.push(() => fs.rmSync(tsconfigPath, { force: true }));
   fs.writeFileSync(
     tsconfigPath,
     JSON.stringify(
@@ -457,6 +460,7 @@ async function main() {
 
   // Temporarily copy index.mjs to eslint.config.mjs so ESLint picks it up as the flat config
   const flatConfigPath = path.join(process.cwd(), "eslint.config.mjs");
+  cleanups.push(() => fs.rmSync(flatConfigPath, { force: true }));
   fs.copyFileSync(path.join(process.cwd(), "index.mjs"), flatConfigPath);
 
   // Write all temp files first; ESLint is started only once afterwards
@@ -521,43 +525,26 @@ async function main() {
       );
     }
 
-    let errorCount = 0;
-    const relevantErrors = [];
-    const ignoredErrors = [];
-    const fatalErrors = [];
-    for (const message of fileResult.messages) {
-      const severityLabel = message.severity === 2 ? "error" : "warning";
-      const line = `  ${message.line}:${message.column}  ${severityLabel}  ${message.message}  ${message.ruleId ?? ""}`;
-      if (message.fatal || (!message.ruleId && message.severity === 2)) {
-        fatalErrors.push(line);
-      } else if (message.ruleId && rules.includes(message.ruleId)) {
-        errorCount = 1;
-        relevantErrors.push(line);
-      } else {
-        ignoredErrors.push(line);
-      }
-    }
-
-    fs.unlinkSync(tmpFilePath);
-    return { name, shouldError, errorCount, relevantErrors, ignoredErrors, fatalErrors };
+    const evaluation = evaluateMessages(fileResult.messages, rules, shouldError);
+    return { name, shouldError, ...evaluation };
   });
   let pass = 0,
     fail = 0;
   for (const {
     name,
     shouldError,
-    errorCount,
+    passed,
     relevantErrors,
     ignoredErrors,
     fatalErrors,
   } of results) {
-    if (fatalErrors.length === 0 && (shouldError ? errorCount > 0 : errorCount === 0)) {
+    if (passed) {
       console.log(`✅ ${name}`);
       pass++;
     } else {
       console.error(
         `❌ ${name} (expected: ${shouldError ? "error" : "OK"}, actual: ${
-          fatalErrors.length > 0 ? "fatal error" : errorCount > 0 ? "error" : "OK"
+          fatalErrors.length > 0 ? "fatal error" : relevantErrors.length > 0 ? "error" : "OK"
         })`
       );
       fail++;
@@ -576,12 +563,6 @@ async function main() {
     }
   }
 
-  fs.unlinkSync(flatConfigPath);
-  fs.rmSync(tmpDir, { recursive: true });
-  for (const dir of createdExtraDirs) {
-    fs.rmSync(path.join(srcDir, dir), { recursive: true });
-  }
-  fs.unlinkSync(tsconfigPath);
 
   const drift = await checkUnicornDrift();
   const driftName =
@@ -608,7 +589,12 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+const cleanups = [];
+main(cleanups)
+  .catch((e) => {
+    console.error(e);
+    process.exitCode = 1;
+  })
+  .finally(() => {
+    for (const cleanup of cleanups.reverse()) cleanup();
+  });
