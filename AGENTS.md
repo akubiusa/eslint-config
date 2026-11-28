@@ -38,7 +38,7 @@ The exported config is an ordered flat config array (the last matching definitio
 
 1. `neostandard({ noStyle: true })` and `tseslint.configs.recommended`.
 2. An explicit list of `eslint-plugin-unicorn` rules: a fixed snapshot of `flat/recommended` (see the comment in the file), not the preset itself.
-3. TypeScript-only rules for `**/*.ts` and `**/*.tsx` (`strictTypeChecked` and `stylisticTypeChecked`, type-aware via `parserOptions.project: ["tsconfig.json"]`), with a few relaxed rules (`no-explicit-any`, `no-unsafe-assignment`, `no-unsafe-argument`, and others).
+3. TypeScript-only rules for `**/*.ts`, `**/*.tsx`, `**/*.mts`, and `**/*.cts` (`strictTypeChecked` and `stylisticTypeChecked`, type-aware via `parserOptions.project: ["tsconfig.json"]`), with a few relaxed rules (`no-explicit-any`, `no-unsafe-assignment`, `no-unsafe-argument`, and others).
 4. `unicorn/catch-error-name` and `unicorn/filename-case` overrides (including a `.vue` PascalCase override).
 5. `ignores`, then `eslint-config-prettier` last so that it can disable conflicting rules.
 
