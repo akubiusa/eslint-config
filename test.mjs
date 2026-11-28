@@ -528,7 +528,7 @@ async function main() {
     const ignoredErrors = [];
     for (const message of fileResult.messages) {
       const severityLabel = message.severity === 2 ? "error" : "warning";
-      const line = `  ${message.line}:${message.column}  ${severityLabel}  ${message.message}  ${message.ruleId ?? ""}`;
+      const line = `[${severityLabel}] ${message.line}:${message.column}  ${message.message}  ${message.ruleId ?? ""}`;
       if (message.ruleId && rules.includes(message.ruleId)) {
         errorCount = 1;
         relevantErrors.push(line);
