@@ -40,7 +40,7 @@ export { default } from '@book000/eslint-config'
 
 - [neostandard](https://github.com/neostandard/neostandard) (without style rules) and the typescript-eslint `recommended` preset for all files.
 - An explicit list of [eslint-plugin-unicorn](https://github.com/sindresorhus/eslint-plugin-unicorn) rules, with some noisy rules turned off.
-- For `*.ts` and `*.tsx`: typescript-eslint `strictTypeChecked` and `stylisticTypeChecked` with a few relaxed rules. A `tsconfig.json` in the project root is required.
+- For `*.ts`, `*.tsx`, `*.mts`, and `*.cts`: typescript-eslint `strictTypeChecked` and `stylisticTypeChecked` with a few relaxed rules. A `tsconfig.json` in the project root is required.
 - [eslint-config-prettier](https://github.com/prettier/eslint-config-prettier), so formatting is left to Prettier.
 
 ## 📑 License

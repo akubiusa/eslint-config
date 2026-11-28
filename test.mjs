@@ -220,6 +220,22 @@ async function main(cleanups) {
       shouldError: false,
       rules: ["@typescript-eslint/no-floating-promises"],
     },
+    ...["mts", "cts"].flatMap((extension) => [
+      {
+        name: `no-floating-promises: a plain Promise is an error in .${extension}`,
+        extension,
+        code: "Promise.resolve(1);",
+        shouldError: true,
+        rules: ["@typescript-eslint/no-floating-promises"],
+      },
+      {
+        name: `no-floating-promises: the void operator is allowed in .${extension}`,
+        extension,
+        code: "void Promise.resolve(1);",
+        shouldError: false,
+        rules: ["@typescript-eslint/no-floating-promises"],
+      },
+    ]),
     {
       name: "no-floating-promises: without the void operator is an error",
       code: "Promise.resolve(1);",
@@ -412,7 +428,7 @@ async function main(cleanups) {
     },
   ];
 
-  // Create temp files under src/ so they reliably match files: ["**/*.ts"] in the flat config.
+  // Create temp files under src/ so they match the TypeScript config.
   const srcDir = path.join(process.cwd(), "src");
   const tmpDir = path.join(srcDir, "__tmp__cli");
   if (!fs.existsSync(srcDir)) fs.mkdirSync(srcDir);
@@ -451,7 +467,7 @@ async function main(cleanups) {
           esModuleInterop: true,
           skipLibCheck: true,
         },
-        include: ["src/**/*.ts", "src/**/*.tsx"],
+        include: ["src/**/*.ts", "src/**/*.tsx", "src/**/*.mts", "src/**/*.cts"],
       },
       null,
       2
@@ -465,8 +481,8 @@ async function main(cleanups) {
 
   // Write all temp files first; ESLint is started only once afterwards
   const tmpFilePaths = testCases.map((testCase, i) => {
-    const { code, dir } = testCase;
-    const kebabName = `test-${i}.ts`;
+    const { code, dir, extension = "ts" } = testCase;
+    const kebabName = `test-${i}.${extension}`;
     const targetDir = dir ? path.join(srcDir, dir) : tmpDir;
     const tmpFilePath = path.join(targetDir, kebabName);
     fs.writeFileSync(tmpFilePath, code);
@@ -491,7 +507,7 @@ async function main(cleanups) {
         eslintBinPath,
         "--no-cache",
         "--ext",
-        ".ts",
+        ".ts,.mts,.cts",
         "--format",
         "json",
         ...tmpFilePaths,
@@ -522,6 +538,12 @@ async function main(cleanups) {
       // would pass the case by mistake (0 errors = OK), so fail loudly instead.
       throw new Error(
         `ESLint did not return a result for temp file: ${tmpFilePath}`
+      );
+    }
+    const fatalError = fileResult.messages.find((message) => message.fatal);
+    if (fatalError) {
+      throw new Error(
+        `ESLint could not lint ${tmpFilePath}: ${fatalError.message}`
       );
     }
 

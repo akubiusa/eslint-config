@@ -14,7 +14,7 @@ export function evaluateMessages(messages, rules, shouldError) {
   const fatalErrors = [];
   for (const message of messages) {
     const severityLabel = message.severity === 2 ? "error" : "warning";
-    const line = `  ${message.line}:${message.column}  ${severityLabel}  ${message.message}  ${message.ruleId ?? ""}`;
+    const line = `[${severityLabel}] ${message.line}:${message.column}  ${message.message}  ${message.ruleId ?? ""}`;
     if (message.fatal || (!message.ruleId && message.severity === 2)) {
       fatalErrors.push(line);
     } else if (message.ruleId && rules.includes(message.ruleId)) {
