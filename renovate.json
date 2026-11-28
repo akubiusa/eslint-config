@@ -1,3 +1,11 @@
 {
-  "extends": ["github>book000/templates//renovate/base-public"]
+  "extends": ["github>book000/templates//renovate/base-public"],
+  "packageRules": [
+    {
+      "description": "The eslint peer range is a tested compatibility range (see AGENTS.md); the shared preset pins every npm dependency, so keep Renovate away from peerDependencies",
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["peerDependencies"],
+      "enabled": false
+    }
+  ]
 }

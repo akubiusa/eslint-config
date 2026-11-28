@@ -17,20 +17,20 @@
     "url": "git@github.com:book000/eslint-config.git"
   },
   "dependencies": {
-    "@typescript-eslint/parser": "8.73.0",
+    "@typescript-eslint/parser": "8.74.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-unicorn": "79.0.0",
     "globals": "17.14.0",
     "neostandard": "0.14.1",
-    "typescript-eslint": "8.73.0"
+    "typescript-eslint": "8.74.0"
   },
   "devDependencies": {
     "eslint": "10.15.0"
   },
   "peerDependencies": {
-    "eslint": "10.15.0"
+    "eslint": "^10.4.0"
   },
-  "packageManager": "pnpm@12.21.0",
+  "packageManager": "pnpm@12.23.0",
   "scripts": {
     "test": "node --experimental-vm-modules test.mjs"
   }
